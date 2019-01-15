@@ -1,1 +1,1 @@
-lapply(list.files(pattern="*.rmd"), function(x) rmarkdown::render(x, output_dir="../pdfs"))
+lapply(list.files(pattern="*.rmd"), function(x) rmarkdown::render(x, output_dir="../pdfs", output_format = c("pdf_document", "github_document")))
