@@ -51,14 +51,21 @@ and we could have, for instance, defined that our input is tab separated by spec
 states <- read.table("states.csv", sep="\t")
 ```
 
-The most common format for R uses the extension `.RData` (or `RDS`), using the functions
+The most common formats for R uses the extensions `.RData` (or `RDS`), using the functions
 `save` (`saveRDS`) and `load` (`readRDS`):
 
 ```{r eval=FALSE}
 save(states, file="states.RData")
 load("states.RData")
 states
+
+saveRDS(states, file = "states.RDS")
+states <- readRDS("states.RDS")
 ```
+
+RDS is generally safer to use than RData because `readRDS` is functional, whereas
+`load` attaches the data to the calling environment (by default), i.e., `load`
+uses non-local assignment, which can have unintended consequences.
 
 But R can also read (and sometimes write) data in other binary formats: data
 coming from Stata, SAS, SPSS, or even Excel. The functions to handle these
