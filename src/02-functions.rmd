@@ -25,7 +25,7 @@ of programming to be able to take advantage of that feature.
 
 ### Defining functions
 
-Think about functions as a way of packing operations in one reusable expression.
+Think about functions as a way of packing operations into one reusable expression.
 For instance, consider a trivial example in which we want to calculate a mean.
 Instead of doing `sum` over `length` in every situation, we could just pack
 those operations together and give them a name:
@@ -201,7 +201,7 @@ a function to every row or column of a matrix, but they are used in a similar
 manner (see: `mapply`, `tapply`, `vapply`). Further, some R users prefer a group
 of functions defined in the `plyr` 
 and `dplyr` packages which perform apply-like operations. These packages are
-briefly discussed in the next section.
+discussed in a subsequent section.
 
 A second option is to create a new function which handles all of these `apply`
 operations automatically. This can be done through the `Vectorize` function. We
