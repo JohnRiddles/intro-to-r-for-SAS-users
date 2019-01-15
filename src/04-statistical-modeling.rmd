@@ -1,0 +1,339 @@
+--- 
+title: "Statistics"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  pdf_document: default
+  md_document:
+    variant: markdown_github
+extension: footnotes
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(fig.path = '../assets/')
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+### Moving from the prompt to the script
+
+So far, we have been doing everything through on the interpreter directly. We
+will use the interpreter a lot during data analysis to test things, but it is
+probably a good idea to keep our code somewhere. Here is when using a tool like
+RStudio starst to make sense: we want something that makes it easy to
+edit text files (like navigation tools or syntax highlighting) and also that
+connects to the R interpreter. 
+
+You will probably run the rest of the sessions by typing in the "Code" window
+and sending things to the console from there.
+
+### Basic data analysis
+
+Let's start by reading in some data from the Internet. 
+
+```{r}
+affairs <- read.csv("http://koaning.io/theme/data/affairs.csv")
+```
+
+The dataset contains data about the number of affairs of 601 politicians and
+some sociodemographic information. A detailed description of the variables and
+some interesting results can be found in Fair, R. (1977) "A note on the
+computation of the tobit estimator", Econometrica, 45, 1723-1727.
+
+Let's start by taking a look at the dataset. For instance, we can print the
+first 6 rows using the function `head`:
+
+```{r}
+head(affairs)
+```
+
+We can also take a look at some descriptives with the function `summary` applied
+to individuals variables:[^1]
+
+[^1]: The function could be applied to a dataset but I find that amount of
+    information overwhelming.
+
+```{r}
+summary(affairs$nbaffairs)
+```
+
+and
+
+```{r}
+summary(affairs$child)
+```
+
+Notice that `summary` does different things depending on the class of the input
+it receives. In the first case, `summary` sees a numeric variable and produces
+the mean and some cutpoints. In the second case, `summary` sees a factor
+variable (a categorical variable) and produces a frequency table. This is a
+pattern that we will encounter very frequently in R.
+
+We can be more specific about getting a frequency table by using:
+
+```{r}
+table(affairs$child)
+```
+
+To transform the previous table into a frequency we can take several routes,
+both illustrative of the way R works relative to software like SAS or Stata. The
+first one is to do it manually, by just dividing the frecuencies by the total
+size, calculated by summing over the column `children`. It is convenient here to
+remember that `child` is a factor that indicates whether the politician has
+children or not. Therefore, the number of observations is just the length of the
+vector.
+
+```{r}
+table(affairs$child)/length(affairs$child) ## We could also have used nrow(affairs)
+```
+
+Note that we don't create new variables in between but instead we perform the
+operation on-the-fly with the output of the two functions. The second option is
+to compose two functions together:
+
+```{r}
+prop.table(table(affairs$child))
+```
+
+The output of `table` is passed to `prop.table` which transforms a table into proportions.
+
+### Hypothesis testing
+
+We can now start analyzing the data. For instance, we would like to check the
+difference in the mean of the number of affairs by whether the politician has
+children or not. The sample mean for each group can be calculated as:
+
+```{r eval=FALSE}
+mean(affairs$nbaffairs[affairs$child == "no"])
+mean(affairs$nbaffairs[affairs$child == "yes"])
+```
+
+A t-test can be performed in several ways. The most natural one for new people
+to R is passing variables. For instance, if we wanted to test one variable
+against the standard null:
+
+```{r}
+t.test(affairs$nbaffairs)
+```
+
+We can also test equality of two means by passing _two_ vectors to the function:
+```{r}
+t.test(affairs$nbaffairs[affairs$child == "no"], affairs$nbaffairs[affairs$child == "yes"])
+```
+
+The thing to notice here is that the second vector is a second _optional
+argument_ to the function and, by passing it, the function performs a different
+routine. Let's take a look at the documentation for `t.test`:
+
+```{r eval=FALSE}
+?t.test
+```
+
+We see that there are two separate _methods_ (more about this in a second) for
+interacting with `t.test`: the one we just used, passing arguments `x` and maybe
+`y`, and another one that usesa `formula`. Formulas play a huge role in R:
+
+```{r}
+my_test <- t.test(nbaffairs ~ child, data=affairs)
+my_test
+```
+
+The LHS is the variable we want to test but split by the groups indicated in the
+RHS. The argument `data` indicates where those two variables live: they are
+columns of the dataset `affairs`. The formula interface probably makes a lot
+more sense if we consider how we would run the same test using a linear model,
+which we will see in a moment. The outcome variable is the LHS of the equation
+in which we separate the equal sign with a `~`. The RHS is a dummy variable (a
+factor) that splits the sample in two groups. There are other ways to pass data
+to the t test. Take a look at the documentation for more information.
+
+Note that we have not just printed the output of running the t-test. Instead, we
+have assigned a name to that output, because it is an object that contains a lot
+more information than what is printed in the screen. This is the most
+distinctive feature of R with respect to other statistical languages.
+
+We can inspect the contents of the `my_test` object using the function `str`:
+
+```{r}
+str(my_test)
+```
+
+Note that `my_test` is a list that contains all the information pertaining to
+the t-test we ran. It contains the statistic, the degrees of freedom, the
+confidence interval, ... and more importantly, we can access all of those
+elements and use them elsewhere. For instance, we can get the test statistic
+from the element `statistic`, or the confidence interval or the estimate by
+accessing the elements in the list:
+
+```{r eval=FALSE}
+my_test$statistic
+my_test$conf.int
+my_test$estimate
+```
+
+It is a good moment to go back to the documentation and compare the output of
+the test against the "Value" section of the help file.
+
+Let's take a deeper look into the formula interface and the structure of objects
+using a linear model.
+
+## The formula interface 
+
+Consider the case in which we can to now run a regression on the number of
+affairs using information about. Do not pay much attention to the theoretical
+soundness of the analysis:
+
+```{r}
+sample_model <- lm(nbaffairs ~ I(age - 18)*child + factor(religious), data=affairs)
+```
+
+We can see here the elegance of the formula interface. The model is doing
+several things. First, we are recentering age so that 18 is the new 0 value. It
+is important that the expression is wrapped in the `I()` function to ensure that
+the `-` inside is taken as an arithmetical operator and not as a formula
+operator. Then, multiply that new variable by the variable `child` which is a
+factor, which uses `yes` as the reference level in the dummy expansion. Not only
+that, the `*` operator creates the full interaction including the main effects 
+(use `:` instead of `*` to include interactions but not main effects).
+Finally, although `religious` is an numerical variable, we pass it through
+`factor` to cast it into a categorical with $n - 1$ dummies. As we can see, the
+formula takes care of a lot of the transformations and lets us express the
+structure of the model very succintly. We could have passed the transformed data
+directly (look at the `y` and `x` arguments in the `lm` documentation), but this
+approach is considerably easier.
+
+Lets take a look at the object to see the estimated coefficients:
+```{r}
+sample_model
+```
+
+Sometimes that is the only information that we need, but most of the time we
+want to make inference with those coefficients. We can see this information by
+getting a `summary` of the object:
+```{r}
+summary_model <- summary(sample_model)
+summary_model
+```
+
+Let's see how the two objects (`sample_model` and `summary_model`) differ by
+taking a look at what they contain:
+
+```{r}
+names(sample_model)
+names(summary_model)
+```
+
+### Prediction
+
+Let's take a more careful look at the model we fit before:
+
+```{r}
+affairs <- read.csv("http://koaning.io/theme/data/affairs.csv")
+sample_model <-  lm(nbaffairs ~ I(age - 18)*child + factor(religious), data=affairs)
+```
+
+We took a look at some values of interest, like the estimated coefficients or
+the confidence intervals around them. It may also be interesting to take a look
+at predictions on the original dataset that we used (remember that
+`sample_model` carries the data used to fit the model).
+
+```{r}
+yhat <- predict(sample_model)
+head(yhat)
+```
+
+The `predict` method takes a number of useful arguments, like `newdata`, which
+applies the estimated coefficients to a new dataset.
+
+```{r}
+my_predictions <- predict(sample_model,
+                          newdata=data.frame("age"=54, "child"="yes", religious=1))
+my_predictions
+``` 
+
+Usually, we want to see predictions with their uncertainty. Let's take a look at
+the documentation to see how to get confidence intervals:
+
+```{r eval=FALSE}
+?predict
+```
+
+Not very useful, right? The reason is that `predict` is a _generic function_
+that operates on different kinds of objects/models. Think about predictions for
+a linear model or for a logistic regression. They are still predictions but they
+are calculated differently and they should be offering different options. But
+they user should not need to remember the class of the model that was fit: and
+the end of the day, we have been insisting on the fact that objects in `R` carry a
+lot of information around. If we look at the bottom of the help file, we will
+see the method for `lm` models, which is what we want:
+
+```{r eval=FALSE}
+?predict.lm
+```
+
+After this small detour, we finally see how to get the confidence intervals:
+
+```{r}
+my_predictions <- predict(sample_model,
+                          newdata=data.frame("age"=54, "child"="yes", religious=1),
+                          interval="confidence")
+my_predictions
+```
+
+### A bit more on modeling
+
+We can think about running some other kinds of models on our dataset. For
+instance, we could think about running a logistic regression.
+
+```{r}
+logit_model <-  glm(I(nbaffairs > 0) ~ I(age - 18)*child + factor(religious), 
+                    data=affairs, 
+                    family=binomial(link="logit")) # link="logit" is the default
+summary(logit_model)
+```
+
+Nothing in the previous call should be odd, we just applied the same logic as
+before but to a new particular type of model.
+
+One of the things that we could do now is check to what extent the model is
+performing well. We could take a significance testing approach, but we could
+also evaluate performance in terms of prediction. We are dealing with a
+categorical output, so we could for instance check the confusion matrix that is
+implicit from predicting probabilities:
+
+```{r}
+phat <- predict(logit_model, newdata=affairs, type="response")
+table(affairs$nbaffairs > 0, phat > 0.5, dnn=list("Observed", "Predicted"))
+```
+
+The model performs poorly, but that's probably because the model predicts low
+probabilities to a positive event (an affair). We could then play with the
+probability threshold to have a more realistic confusion matrix:
+
+```{r}
+table(affairs$nbaffairs > 0, phat > quantile(phat, .5), dnn=list("Observed", "Predicted"))
+```
+
+Still not a good performance, but still much better than the original matrix we got. 
+
+We could also explore the predictors and see their marginal effects. For
+instance, by checking how the probability of a positive even changes as we move
+some of the variables on the RHS. One way of accomplishing this is by, for
+instance, applying our model to a grid of variables:
+
+```{r}
+fake_data <- expand.grid(age = c(18, 36, 54, 72), 
+                         child = c("no", "yes"), 
+                         religious = 1)
+fake_data$prediction <- predict(logit_model, newdata=fake_data, type="response")
+fake_data
+```
+
+We did two things here. First, we created a fake dataset by expanding on all the
+combinations of the values that were passed to `expand.grid`. Then, we applied
+our predicted model to this new dataset and got the predicted probabilities for
+each case. Notice I put those predictions back on the fake dataset to be able to
+see to what combination each prediction corresponds.
+
+We can now see how the change in the probability for different combinations of
+the age and child variable. But inspecting the model this way may be hard. It is
+probably better to accomplish this with plots.
