@@ -1,15 +1,15 @@
 Statistics
 ================
-January 15, 2019
+January 16, 2019
 
 ### Moving from the prompt to the script
 
 So far, we have been doing everything through on the interpreter
 directly. We will use the interpreter a lot during data analysis to test
 things, but it is probably a good idea to keep our code somewhere. Here
-is when using a tool like RStudio starst to make sense: we want
-something that makes it easy to edit text files (like navigation tools
-or syntax highlighting) and also that connects to the R interpreter.
+is when using a tool like RStudio start to make sense: we want something
+that makes it easy to edit text files (like navigation tools or syntax
+highlighting) and also that connects to the R interpreter.
 
 You will probably run the rest of the sessions by typing in the “Code”
 window and sending things to the console from there.
