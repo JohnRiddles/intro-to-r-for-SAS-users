@@ -23,6 +23,22 @@ small functions. In addition, because R is open-source, you can inspect what
 every function does, so it is useful to get a sense of the most basic elements 
 of programming to be able to take advantage of that feature.
 
+### Calling functions
+
+Functions in R support both ordinal and named arguments. Further, some arguments
+are optional. For example,
+
+```{r eval = FALSE}
+x <- seq(1,4)
+x <- seq(to = 4, from = 1)
+```
+
+These expressions both produce the same result. In the first statement, we do
+not provide names to the arguments. They are passed to the first two parameters
+by the order the order in which they appear. In the second, we specify which 
+parameters each argument is being passed to. Further, `seq` takes more than 2
+parameters, but we simply accepted the defaults for the other parameters.
+
 ### Defining functions
 
 Think about functions as a way of packing operations into one reusable expression.
@@ -58,6 +74,33 @@ my_mean <- function(x) {
 Note the use of braces to enclose the contents of the function. Braces are
 optional when the function body consists of a single line but are necessary when
 the function body contains multiple lines.
+
+### Default parameters and variadic parameters
+
+Let's define a function that sums up the values in up to two vectors, producing
+a single total.
+
+```{r}
+mysum <- function(first, second = 0) sum(c(first, second))
+```
+
+Notice that the second argument is optional and was supplied a default value of
+0. Because of lazy evaluation of parameters, default values can even be functions
+of other parameters.
+
+Now, let's generalize our function to any number of arguments. We can do so
+by using the variadic parameter `...`, which contains a list representing
+"everything else."
+
+```{r}
+mysum <- function(...) {
+  x <- unlist(list(...)) # Let's "unlist" it, i.e., convert it to a vector
+  sum(x)
+}
+```
+
+Note that to capture the arguments in `...`, we use `list(...)` and assign it 
+to a variable.
 
 ### Closures
 
