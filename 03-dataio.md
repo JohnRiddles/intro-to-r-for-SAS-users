@@ -1,6 +1,6 @@
 Data I/O
 ================
-January 15, 2019
+January 16, 2019
 
 We can write a dataset to disk in comma-separated format using the
 `write.csv` function. Using our previous “states” example…

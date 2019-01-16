@@ -1,6 +1,6 @@
 Data manipulation
 ================
-January 15, 2019
+January 16, 2019
 
 R packs a lot of functionality to make data manipulation easier, and it
 is impossible to even give an overview of the array of tools that are
