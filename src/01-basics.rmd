@@ -1,10 +1,10 @@
 --- 
 title: "The R building blocks"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   pdf_document: default
   md_document:
     variant: markdown_github
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 ---
 
 ```{r setup, include=FALSE, cache=FALSE}
